@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatapp</title>
+</head>
+
+<style>
+    * {
+        padding: 0;
+        margin: 0;
+    }
+
+    body {
+        width: 100vw;
+        color: #fefefefe;
+    }
+
+    footer {
+        width: 100vw;
+        align-content: center;
+        display: flex;
+        flex-direction: row;
+        background-color: lightseagreen;
+    }
+
+    footer > h1 {
+        padding: 0.7rem 1rem;
+    }
+
+    #content {
+        background-color: azure;
+        color: black;
+    }
+
+    #content > p {
+        padding: 0.7rem 1rem;
+    }
+
+    #content > p:nth-child(odd) {
+        padding: 0.7rem 1rem;
+        background-color: violet;
+    }
+
+    #content > p:nth-child(even) {
+        padding: 0.7rem 1rem;
+        background-color: palevioletred;
+    }
+
+    .form {
+        display: flex;
+        flex-direction: row;
+        position: absolute;
+        width: 100vw;
+        bottom: 0;
+        background-color: lightseagreen;
+    }
+
+    #msg {
+        flex-grow: 5;
+        height: 2rem;
+        border: none;
+        padding: 0 1rem;
+    }
+
+    #send {
+        flex-grow: 1;
+        height: 2rem;
+        border: none;
+    }
+</style>
+<body>
+
+<footer>
+    <h1>Simple Chat App</h1>
+</footer>
+
+<section id="content">
+</section>
+
+<div class="form">
+    <input type="text" name="msg" id="msg" placeholder="Type message">
+    <input type="button" value="send" id="send">
+</div>
+
+<script>
+    const form = document.getElementById("msg")
+    const send = document.getElementById("send")
+    const content = document.getElementById("content")
+    let id = ""
+
+    ws = new WebSocket("ws://localhost:8080/ws")
+
+    ws.onopen = function (event) {
+        console.log("connected to server")
+    }
+
+    ws.onclose = function (event) {
+        console.log("disconnected to server")
+    }
+
+    ws.onmessage = function (event) {
+        let result = JSON.parse(event.data)
+
+        if (id === "") id = result['user_id']
+
+        if (result["for"] === "join") {
+            const node = document.createElement("p")
+            node.textContent = "A user joined with id : " + result['user_id']
+            content.appendChild(node)
+        }
+
+        if (result["for"] === "left") {
+            const node = document.createElement("p")
+            node.textContent = "A user left with id : " + result['user_id']
+            content.appendChild(node)
+        }
+
+        if (result["for"] === "message") {
+            const node = document.createElement("p")
+            node.textContent = result['user_id'] + ": " + result['body']
+            content.appendChild(node)
+        }
+    }
+
+    send.onclick = function () {
+        console.log("send message with value = ", form.value)
+        ws.send(JSON.stringify({
+            user_id: id,
+            for: 'message',
+            message_type: 1,
+            body: form.value,
+        }))
+
+        form.value = ''
+    }
+</script>
+
+</body>
+</html>
