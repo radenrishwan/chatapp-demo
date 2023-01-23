@@ -3,10 +3,10 @@ package main
 import (
 	"chatapp/ws"
 	"flag"
-	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"net/http"
+
+	"github.com/google/uuid"
 	"nhooyr.io/websocket"
 )
 
@@ -19,8 +19,9 @@ func main() {
 
 	pool := ws.NewPool()
 	go pool.Run()
+
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		fmt.Fprintf(writer, "server run")
+		http.ServeFile(writer, request, "./../frontend/web/index.html")
 	})
 
 	http.HandleFunc("/ws", func(writer http.ResponseWriter, request *http.Request) {
