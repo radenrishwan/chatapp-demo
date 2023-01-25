@@ -3,6 +3,7 @@ package main
 import (
 	"chatapp/ws"
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 
@@ -26,8 +27,24 @@ func main() {
 
 	router.Use(middleware.Logger)
 
+	router.Get("/", func(writer http.ResponseWriter, request *http.Request) {
+		// passing data to html
+		files, err := template.ParseFiles("./../frontend/web/index.html")
+		if err != nil {
+			log.Println("Error on parse file : ", err.Error())
+		}
+
+		err = files.Execute(writer, map[string]any{
+			"Rooms": pool.GetRooms(),
+			"Len":   len(pool.GetRooms()),
+		})
+		if err != nil {
+			log.Println("Error on execute file : ", err.Error())
+		}
+	})
+
 	router.Get("/{room}", func(writer http.ResponseWriter, request *http.Request) {
-		http.ServeFile(writer, request, "./../frontend/web/index.html")
+		http.ServeFile(writer, request, "./../frontend/web/room.html")
 	})
 
 	router.Get("/ws/{room}", func(writer http.ResponseWriter, request *http.Request) {

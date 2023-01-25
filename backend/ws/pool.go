@@ -49,3 +49,13 @@ func (p Pool) Run() {
 		}
 	}
 }
+
+func (p Pool) GetRooms() []string {
+	var room []string
+
+	for id, _ := range p.Rooms {
+		room = append(room, id)
+	}
+
+	return room
+}
