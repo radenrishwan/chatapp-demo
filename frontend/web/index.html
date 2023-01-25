@@ -89,7 +89,8 @@
     const content = document.getElementById("content")
     let id = ""
 
-    ws = new WebSocket("ws://localhost:8080/ws")
+    const room = window.location.href.split("/").pop()
+    ws = new WebSocket("ws://localhost:8080/ws/" + room)
 
     ws.onopen = function (event) {
         console.log("connected to server")
@@ -127,6 +128,7 @@
         console.log("send message with value = ", form.value)
         ws.send(JSON.stringify({
             user_id: id,
+            room_id: room,
             for: 'message',
             message_type: 1,
             body: form.value,

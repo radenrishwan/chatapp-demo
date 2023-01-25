@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"nhooyr.io/websocket"
 )
@@ -17,19 +19,24 @@ var (
 func main() {
 	flag.Parse()
 
+	router := chi.NewRouter()
+
 	pool := ws.NewPool()
 	go pool.Run()
 
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+	router.Use(middleware.Logger)
+
+	router.Get("/{room}", func(writer http.ResponseWriter, request *http.Request) {
 		http.ServeFile(writer, request, "./../frontend/web/index.html")
 	})
 
-	http.HandleFunc("/ws", func(writer http.ResponseWriter, request *http.Request) {
+	router.Get("/ws/{room}", func(writer http.ResponseWriter, request *http.Request) {
+		log.Println(request.URL.Path[len("/ws/"):])
 		runApp(writer, request, pool)
 	})
 
 	log.Println("App running....")
-	log.Fatalln(http.ListenAndServe(":"+*PORT, nil))
+	log.Fatalln(http.ListenAndServe(":"+*PORT, router))
 }
 
 func runApp(w http.ResponseWriter, r *http.Request, pool *ws.Pool) {
@@ -45,9 +52,10 @@ func runApp(w http.ResponseWriter, r *http.Request, pool *ws.Pool) {
 	defer conn.Close(websocket.StatusInternalError, "internal error")
 
 	client := ws.Client{
-		Id:   uuid.NewString(),
-		Conn: conn,
-		Pool: pool,
+		Id:     uuid.NewString(),
+		Conn:   conn,
+		Pool:   pool,
+		RoomId: r.URL.Path[len("/ws/"):],
 	}
 
 	// read

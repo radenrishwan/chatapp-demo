@@ -9,6 +9,7 @@ import (
 
 type Client struct {
 	Id              string
+	RoomId          string
 	*websocket.Conn // add pool connection later
 	*Pool
 }

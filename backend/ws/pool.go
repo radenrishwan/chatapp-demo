@@ -1,25 +1,18 @@
 package ws
 
-import (
-	"context"
-	"log"
-	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
-)
-
 type Pool struct {
+	Rooms     map[string]*Room
 	Join      chan *Client
 	Left      chan *Client
 	Broadcast chan Message
-	Clients   map[*Client]string
 }
 
 func NewPool() *Pool {
 	return &Pool{
+		Rooms:     map[string]*Room{},
 		Join:      make(chan *Client),
 		Left:      make(chan *Client),
 		Broadcast: make(chan Message),
-		Clients:   map[*Client]string{},
 	}
 }
 
@@ -27,59 +20,32 @@ func (p Pool) Run() {
 	for {
 		select {
 		case client := <-p.Join:
-			log.Printf("User with id : %s joined to room chat", client.Id)
-
-			// add user to connection pool
-			p.Clients[client] = client.Id
-
-			// broadcast to all user when new user joined to chat
-			for b := range p.Clients {
-				err := wsjson.Write(context.Background(), b.Conn, Message{
-					For:         JOIN,
-					UserId:      client.Id,
-					MessageType: websocket.MessageText,
-					Body:        "An user joined with id : " + client.Id,
-				})
-
-				if err != nil {
-					log.Println("Error on user joined : ", err.Error())
-				}
+			// check if room is exist
+			if _, ok := p.Rooms[client.RoomId]; !ok {
+				p.Rooms[client.RoomId] = NewRoom()
+				go p.Rooms[client.RoomId].Run()
 			}
 
+			// add user to room
+			p.Rooms[client.RoomId].Join <- client
 			break
 		case client := <-p.Left:
-			delete(p.Clients, client) // remove user from connection pool
-
-			// broadcast to all user when user has left from chat
-			for b := range p.Clients {
-				err := wsjson.Write(context.Background(), b.Conn, Message{
-					For:         LEFT,
-					UserId:      client.Id,
-					MessageType: websocket.MessageText,
-					Body:        "An user left with id : " + client.Id,
-				})
-
-				if err != nil {
-					log.Println("Error on user left : ", err.Error())
-				}
+			// remove user from room
+			p.Rooms[client.RoomId].Left <- client
+			// check if client is empty, remove room from pool
+			if len(p.Rooms[client.RoomId].Clients) == 0 {
+				delete(p.Rooms, client.RoomId)
 			}
 
 			break
 		case message := <-p.Broadcast:
-			for b := range p.Clients {
-				err := wsjson.Write(context.Background(), b.Conn, Message{
-					For:         MSG,
-					UserId:      message.UserId,
-					MessageType: websocket.MessageText,
-					Body:        message.Body,
-				})
-
-				log.Println("an user send message")
-
-				if err != nil {
-					log.Println("Error on user broadcast : ", err.Error())
-				}
+			// check if room is exist
+			if _, ok := p.Rooms[message.RoomId]; !ok {
+				return // TODO; send error message to client
 			}
+
+			// broadcast message to all user in room
+			p.Rooms[message.RoomId].Broadcast <- message
 		}
 	}
 }
