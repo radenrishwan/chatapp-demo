@@ -1,5 +1,9 @@
 package ws
 
+import (
+	"log"
+)
+
 type Pool struct {
 	Rooms     map[string]*Room
 	Join      chan *Client
@@ -30,11 +34,13 @@ func (p Pool) Run() {
 			p.Rooms[client.RoomId].Join <- client
 			break
 		case client := <-p.Left:
-			// remove user from room
 			p.Rooms[client.RoomId].Left <- client
+
 			// check if client is empty, remove room from pool
-			if len(p.Rooms[client.RoomId].Clients) == 0 {
+			if len(p.Rooms[client.RoomId].Clients) == 1 {
 				delete(p.Rooms, client.RoomId)
+				log.Println("Room with id : ", client.RoomId, " has been removed from pool")
+				log.Println("len room in pool : ", len(p.Rooms))
 			}
 
 			break

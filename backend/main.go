@@ -48,7 +48,6 @@ func main() {
 	})
 
 	router.Get("/ws/{room}", func(writer http.ResponseWriter, request *http.Request) {
-		log.Println(request.URL.Path[len("/ws/"):])
 		runApp(writer, request, pool)
 	})
 

@@ -17,9 +17,10 @@ type Client struct {
 func (c *Client) Read(ctx context.Context) {
 	// TODO: unregister/delete user from connection pool
 	defer func() {
+		log.Println("User with id : ", c.Id, " has left from room : ", c.RoomId)
+		c.Conn.Close(websocket.StatusNormalClosure, "Connection has closed normally")
 		c.Pool.Left <- c
 	}()
-	defer c.Conn.Close(websocket.StatusNormalClosure, "Connection has closed normally")
 
 	// read message from all user
 	var message Message
