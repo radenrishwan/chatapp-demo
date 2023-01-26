@@ -12,14 +12,16 @@ type Room struct {
 	Left      chan *Client
 	Broadcast chan Message
 	Clients   map[*Client]string
+	Pool      *Pool
 }
 
-func NewRoom() *Room {
+func NewRoom(pool *Pool) *Room {
 	return &Room{
 		Join:      make(chan *Client),
 		Left:      make(chan *Client),
 		Broadcast: make(chan Message),
 		Clients:   map[*Client]string{},
+		Pool:      pool,
 	}
 }
 
@@ -49,6 +51,7 @@ func (r Room) Run() {
 			break
 		case client := <-r.Left:
 			delete(r.Clients, client) // remove user from connection pool
+			r.Pool.DeleteEmptyRoom(client.RoomId)
 
 			// broadcast to all user when user has left from chat
 			for b := range r.Clients {

@@ -13,10 +13,11 @@
 
     body {
         width: 100vw;
-        color: #fefefefe;
+        background-color: #fefefefe;
     }
 
     footer {
+        color: #fefefefe;
         width: 100vw;
         align-content: center;
         display: flex;
@@ -96,6 +97,7 @@
         console.log("connected to server")
     }
 
+    // TODO: handle reconnect to server when disconnected not gracefully
     ws.onclose = function (event) {
         console.log("disconnected to server")
     }

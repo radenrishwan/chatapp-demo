@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatapp</title>
+</head>
+
+<style>
+    * {
+        padding: 0;
+        margin: 0;
+    }
+
+    body {
+        width: 100vw;
+        background-color: #fefefefe;
+    }
+
+    footer {
+        color: #fefefefe;
+        width: 100vw;
+        align-content: center;
+        display: flex;
+        flex-direction: row;
+        background-color: lightseagreen;
+    }
+
+    footer > h1 {
+        padding: 0.7rem 1rem;
+    }
+</style>
+<body>
+
+<footer>
+    <h1>Simple Chat App</h1>
+</footer>
+
+<h1>Room List</h1>
+
+<!-- for room data -->
+{{ if eq .Len 0 }}
+    <p>No rooms available</p>
+{{ end }}
+
+{{ range $key, $room := .Rooms }}
+    <a href="/{{ $room }}">{{ $room }}</a>
+{{ end }}
+
+<section id="content">
+</section>
+</body>
+</html>

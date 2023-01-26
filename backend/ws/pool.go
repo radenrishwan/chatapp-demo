@@ -26,7 +26,7 @@ func (p Pool) Run() {
 		case client := <-p.Join:
 			// check if room is exist
 			if _, ok := p.Rooms[client.RoomId]; !ok {
-				p.Rooms[client.RoomId] = NewRoom()
+				p.Rooms[client.RoomId] = NewRoom(&p)
 				go p.Rooms[client.RoomId].Run()
 			}
 
@@ -37,7 +37,7 @@ func (p Pool) Run() {
 			p.Rooms[client.RoomId].Left <- client
 
 			// check if client is empty, remove room from pool
-			if len(p.Rooms[client.RoomId].Clients) == 1 {
+			if len(p.Rooms[client.RoomId].Clients) == 0 {
 				delete(p.Rooms, client.RoomId)
 				log.Println("Room with id : ", client.RoomId, " has been removed from pool")
 				log.Println("len room in pool : ", len(p.Rooms))
@@ -53,6 +53,19 @@ func (p Pool) Run() {
 			// broadcast message to all user in room
 			p.Rooms[message.RoomId].Broadcast <- message
 		}
+	}
+}
+
+func (p Pool) DeleteEmptyRoom(roomId string) {
+	if _, ok := p.Rooms[roomId]; !ok {
+		return
+	}
+
+	// check if client is empty, remove room from pool
+	if len(p.Rooms[roomId].Clients) == 0 {
+		delete(p.Rooms, roomId)
+		log.Println("Room with id : ", roomId, " has been removed from pool")
+		log.Println("len room in pool : ", len(p.Rooms))
 	}
 }
 
